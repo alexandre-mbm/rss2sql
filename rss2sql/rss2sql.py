@@ -178,15 +178,25 @@ class SQL:
 
         return feedparser.parse(ret.content)
 
+    def load_possible_old(self,link):
+        query = self._session.query(RSS)
+        results = query.filter(RSS.link==link)
+        possible_instance = results.first()
+        return possible_instance
+        # https://stackoverflow.com/a/1851498
+
     def fetch(self):
         for feed in self.feeds['entries']:
-            self.merge(
-                RSS(
+            newer = RSS(
                     **{
                         name: func(feed)
                         for name, func in self.config['rss']['explain']
-                    }))
+                    }
+            )
+            possible = self.load_possible_old(newer.link)
+            self.merge(possible)
             self.commit()
+
 
 def entrypoint():
     import argparse
